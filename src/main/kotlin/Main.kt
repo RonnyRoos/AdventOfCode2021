@@ -1,23 +1,32 @@
-import util.HttpGetData
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.prompt
+import solution.Solution
+import solution.Solution01
+import util.AoCInputFetcher
 
-fun main(args: Array<String>) {
-    val httpHelper = HttpGetData()
+class SelectSolution : CliktCommand() {
+    private val classConstructors = listOf<() -> Solution>(
+        ::Solution01,
+    )
 
-    val depthList = httpHelper.getAdventOfCodeInputData().removeSuffix("\n").split("\n").map { it.toInt() }
-    println(depthList)
+    private val aocCookie by option(envvar = "AOC_COOKIE")
+    private val solutionNumber by option().prompt()
 
-    var previous = Int.MIN_VALUE
-    var counter = -1
-    depthList.forEach {
-        if (it > previous) {
-            println("$it (increased)")
-            counter++
+    override fun run() {
+        val solutionNumber : Int = solutionNumber.toInt()
+        val cookie : String
+        if(aocCookie.isNullOrEmpty()) {
+            error("No cookies, come to the dark side")
         } else {
-            println("$it (decreased)")
+            cookie = aocCookie.toString()
         }
-        previous = it
+
+        val aoCInputFetcher = AoCInputFetcher(cookie)
+        val solution : Solution = classConstructors[solutionNumber - 1]()
+
+        println(solution.getSolution(aoCInputFetcher))
     }
-
-    println(counter)
-
 }
+
+fun main(args: Array<String>) = SelectSolution().main(args)
